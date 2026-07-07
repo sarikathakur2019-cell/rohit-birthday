@@ -166,6 +166,102 @@
     .letter p{ font-size:19px; }
     pre.code{ font-size:12px; }
   }
+
+  .love-fab{
+    position: fixed; right: 26px; bottom: 26px; z-index: 60;
+    width: 62px; height: 62px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose), #ff8fb3);
+    border: none; box-shadow: 0 10px 26px rgba(255,107,157,0.45);
+    font-size: 26px; cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.08); }
+  }
+
+  .modal-overlay{
+    position: fixed; inset: 0; z-index: 70;
+    background: rgba(4,6,10,0.78);
+    backdrop-filter: blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .modal-overlay.open{ opacity: 1; pointer-events: auto; }
+
+  .modal-card{
+    width:100%; max-width: 480px;
+    background: linear-gradient(180deg, #171422, #120f1a);
+    border: 1px solid #3a2a3d;
+    border-radius: 16px;
+    padding: 30px 30px 26px;
+    position: relative;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+    transform: scale(0.92) translateY(10px);
+    transition: transform .3s ease;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal-overlay.open .modal-card{ transform: scale(1) translateY(0); }
+
+  .modal-close{
+    position:absolute; top:14px; right:16px;
+    background:none; border:none; color: var(--muted);
+    font-size:18px; cursor:pointer; line-height:1;
+  }
+  .modal-close:hover{ color: var(--text); }
+
+  .modal-greeting{
+    text-align:center; margin-bottom: 6px;
+  }
+  .modal-greeting .emoji-row{ font-size: 30px; margin-bottom: 6px; }
+  .modal-greeting h2{
+    font-family:'Caveat', cursive; color: var(--rose);
+    font-size: 36px; margin: 0 0 14px 0;
+  }
+  .modal-card p.msg{
+    font-family:'Caveat', cursive; font-size: 21px; line-height:1.5;
+    color:#eef0f4; text-align:center; margin: 0 0 8px;
+  }
+  .modal-card .sign2{
+    text-align:center; font-family:'Caveat', cursive; font-size:22px;
+    color: var(--gold); margin: 6px 0 22px;
+  }
+
+  .cal-wrap{
+    background: var(--panel-2); border:1px solid var(--border);
+    border-radius: 12px; padding: 16px 16px 14px;
+  }
+  .cal-title{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color: var(--muted);
+    margin-bottom: 10px; letter-spacing:0.3px;
+  }
+  .cal-title span.month{ color: var(--gold); font-weight:600; }
+  .cal-grid{
+    display:grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px; text-align:center;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .cal-grid .dow{
+    font-size: 10.5px; color:#4c5563; padding-bottom: 4px;
+  }
+  .cal-grid .day{
+    font-size: 12.5px; color:#aeb6c2; padding: 7px 0; border-radius:6px;
+  }
+  .cal-grid .day.blank{ visibility:hidden; }
+  .cal-grid .day.today-mark{
+    background: linear-gradient(135deg, var(--rose), var(--gold));
+    color:#191019; font-weight:700;
+    box-shadow: 0 0 0 2px rgba(255,107,157,0.35);
+    position:relative;
+  }
+  .cal-caption{
+    text-align:center; margin-top: 10px; font-size:12px; color: var(--rose);
+    font-family:'JetBrains Mono', monospace;
+  }
 </style>
 </head>
 <body>
@@ -225,6 +321,35 @@
   </div>
 </div>
 
+<button class="love-fab" id="loveFab" title="Open your message">💌</button>
+
+<div class="modal-overlay" id="loveModal">
+  <div class="modal-card">
+    <button class="modal-close" id="loveClose">✕</button>
+    <div class="modal-greeting">
+      <div class="emoji-row">🎂❤️🎉</div>
+      <h2>Happy Birthday, Rohit</h2>
+    </div>
+    <p class="msg">However this day finds you — I hope it's soft, easy, and full of the small things that make you smile. You've made every ordinary day feel a little more like home, and I'm endlessly grateful for that.</p>
+    <p class="msg">Here's to you — today, and every day after.</p>
+    <div class="sign2">With all my love ❤️</div>
+
+    <div class="cal-wrap">
+      <div class="cal-title"><span>Reminder</span><span class="month">August 2026</span></div>
+      <div class="cal-grid">
+        <div class="dow">S</div><div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div>
+        <div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day">1</div>
+        <div class="day">2</div><div class="day">3</div><div class="day">4</div><div class="day">5</div><div class="day">6</div><div class="day">7</div><div class="day">8</div>
+        <div class="day">9</div><div class="day">10</div><div class="day">11</div><div class="day">12</div><div class="day">13</div><div class="day">14</div><div class="day">15</div>
+        <div class="day">16</div><div class="day">17</div><div class="day">18</div><div class="day">19</div><div class="day">20</div><div class="day">21</div><div class="day today-mark">22</div>
+        <div class="day">23</div><div class="day">24</div><div class="day">25</div><div class="day">26</div><div class="day">27</div><div class="day">28</div><div class="day">29</div>
+        <div class="day">30</div><div class="day">31</div>
+      </div>
+      <div class="cal-caption">22 August — your day ❤️</div>
+    </div>
+  </div>
+</div>
+
 <script>
   const tabs = document.querySelectorAll('.tab');
   const panes = { code: document.getElementById('pane-code'), letter: document.getElementById('pane-letter') };
@@ -238,6 +363,18 @@
   const terminal = document.getElementById('terminal');
   const runBtn = document.getElementById('runBtn');
   let running = false;
+
+  const loveFab = document.getElementById('loveFab');
+  const loveModal = document.getElementById('loveModal');
+  const loveClose = document.getElementById('loveClose');
+  loveFab.addEventListener('click', () => {
+    loveModal.classList.add('open');
+    burstConfetti();
+  });
+  loveClose.addEventListener('click', () => loveModal.classList.remove('open'));
+  loveModal.addEventListener('click', (e) => {
+    if(e.target === loveModal) loveModal.classList.remove('open');
+  });
 
   const sequence = [
     { html: '<span class="prompt">$</span> node birthday.js', delay: 0 },
