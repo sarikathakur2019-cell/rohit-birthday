@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>birthday.js — Rohit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0d1117;
+    --panel: #12161d;
+    --panel-2: #0a0d12;
+    --border: #232a34;
+    --text: #c9d1d9;
+    --muted: #6e7681;
+    --gold: #e3b341;
+    --rose: #ff6b9d;
+    --keyword: #ff7b72;
+    --string: #a5d6ff;
+    --comment: #6b7480;
+    --func: #d2a8ff;
+    --num: #79c0ff;
+    --prop: #79c0ff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background: radial-gradient(1200px 800px at 80% -10%, #161d29 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    overflow-x:hidden;
+  }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    min-height:100vh; padding: 24px;
+  }
+  .window{
+    width:100%; max-width: 860px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.02);
+    overflow:hidden;
+    position:relative;
+  }
+  .titlebar{
+    display:flex; align-items:center; gap:10px;
+    padding: 12px 16px;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot{ width:11px; height:11px; border-radius:50%; }
+  .dot.r{ background:#ff5f56; }
+  .dot.y{ background:#ffbd2e; }
+  .dot.g{ background:#27c93f; }
+  .titlebar .name{
+    margin-left: 8px; font-size:12.5px; color:var(--muted);
+    letter-spacing:0.3px;
+  }
+  .tabs{
+    display:flex; background: var(--panel-2); border-bottom:1px solid var(--border);
+  }
+  .tab{
+    padding: 10px 18px; font-size:13px; color: var(--muted);
+    cursor:pointer; border-right:1px solid var(--border);
+    position:relative; user-select:none;
+    transition: color .15s ease;
+  }
+  .tab:hover{ color: var(--text); }
+  .tab.active{
+    color: var(--gold); background: var(--panel);
+  }
+  .tab.active::after{
+    content:""; position:absolute; left:0; right:0; bottom:-1px; height:2px;
+    background: var(--gold);
+  }
+  .tab .dotmark{ color: var(--rose); margin-left:6px; }
+
+  .pane{ display:none; padding: 22px 26px; }
+  .pane.active{ display:block; }
+
+  pre.code{
+    margin:0; font-size: 13.5px; line-height: 1.85;
+    white-space:pre-wrap; word-break:break-word;
+  }
+  .ln{ color:#3d4552; user-select:none; display:inline-block; width:26px; }
+  .kw{ color: var(--keyword); }
+  .str{ color: var(--string); }
+  .cm{ color: var(--comment); font-style:italic; }
+  .fn{ color: var(--func); }
+  .nm{ color: var(--num); }
+  .pr{ color: var(--prop); }
+  .punc{ color: #d7dee6; }
+
+  .letter{
+    background: linear-gradient(180deg, #161b24, #11151b);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding: 28px 30px;
+    font-family:'Caveat', cursive;
+  }
+  .letter h2{
+    margin:0 0 14px 0; color: var(--rose);
+    font-size: 32px; font-weight:700;
+  }
+  .letter p{
+    font-size: 22px; line-height:1.55; color:#e7ecf2; margin: 0 0 14px 0;
+  }
+  .letter .sign{
+    margin-top: 10px; font-size:24px; color: var(--gold);
+  }
+  .letter .hint{
+    font-family:'JetBrains Mono', monospace; font-size:11px; color: var(--muted);
+    margin-top:18px; border-top:1px dashed var(--border); padding-top:10px;
+  }
+
+  .runbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 10px 16px; background: var(--panel-2); border-top:1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .runbar .label{ font-size:12px; color:var(--muted); }
+  button.run{
+    background: linear-gradient(180deg, #2ea043, #238636);
+    color:#fff; border:none; border-radius:6px;
+    padding: 7px 16px; font-family:inherit; font-size:12.5px; font-weight:600;
+    cursor:pointer; display:flex; align-items:center; gap:7px;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  button.run:hover{ transform: translateY(-1px); box-shadow: 0 6px 18px rgba(46,160,67,0.35); }
+  button.run:active{ transform: translateY(0); }
+
+  .terminal{
+    padding: 16px 20px 20px; background: var(--panel-2);
+    font-size: 13px; min-height: 150px; max-height: 260px; overflow-y:auto;
+  }
+  .terminal .line{ margin: 3px 0; opacity:0; animation: appear .25s forwards; }
+  @keyframes appear{ to{ opacity:1; } }
+  .terminal .prompt{ color: var(--gold); }
+  .terminal .ok{ color:#7ee787; }
+  .terminal .info{ color: var(--num); }
+  .terminal .heart{ color: var(--rose); }
+  .cursor{
+    display:inline-block; width:7px; height:14px; background: var(--gold);
+    vertical-align:middle; margin-left:4px;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink{ 50%{ opacity:0; } }
+
+  canvas#confetti{
+    position:fixed; inset:0; pointer-events:none; z-index:50;
+  }
+  .balloon{
+    position:fixed; bottom:-60px; font-size: 34px; z-index:40;
+    animation: floatUp linear forwards;
+    pointer-events:none;
+  }
+  @keyframes floatUp{
+    0%{ transform: translateY(0) translateX(0) rotate(0deg); opacity:1; }
+    100%{ transform: translateY(-115vh) translateX(var(--drift,20px)) rotate(8deg); opacity:0; }
+  }
+
+  @media (max-width: 560px){
+    .letter h2{ font-size:26px; }
+    .letter p{ font-size:19px; }
+    pre.code{ font-size:12px; }
+  }
+
+  .love-fab{
+    position: fixed; right: 26px; bottom: 26px; z-index: 60;
+    width: 62px; height: 62px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose), #ff8fb3);
+    border: none; box-shadow: 0 10px 26px rgba(255,107,157,0.45);
+    font-size: 26px; cursor: pointer;
+    display:flex; align-items:center; justify-content:center;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ transform: scale(1); }
+    50%{ transform: scale(1.08); }
+  }
+
+  .modal-overlay{
+    position: fixed; inset: 0; z-index: 70;
+    background: rgba(4,6,10,0.78);
+    backdrop-filter: blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .modal-overlay.open{ opacity: 1; pointer-events: auto; }
+
+  .modal-card{
+    width:100%; max-width: 480px;
+    background: linear-gradient(180deg, #171422, #120f1a);
+    border: 1px solid #3a2a3d;
+    border-radius: 16px;
+    padding: 30px 30px 26px;
+    position: relative;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.6);
+    transform: scale(0.92) translateY(10px);
+    transition: transform .3s ease;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .modal-overlay.open .modal-card{ transform: scale(1) translateY(0); }
+
+  .modal-close{
+    position:absolute; top:14px; right:16px;
+    background:none; border:none; color: var(--muted);
+    font-size:18px; cursor:pointer; line-height:1;
+  }
+  .modal-close:hover{ color: var(--text); }
+
+  .modal-greeting{
+    text-align:center; margin-bottom: 6px;
+  }
+  .modal-greeting .emoji-row{ font-size: 30px; margin-bottom: 6px; }
+  .modal-greeting h2{
+    font-family:'Caveat', cursive; color: var(--rose);
+    font-size: 36px; margin: 0 0 14px 0;
+  }
+  .modal-card p.msg{
+    font-family:'Caveat', cursive; font-size: 21px; line-height:1.5;
+    color:#eef0f4; text-align:center; margin: 0 0 8px;
+  }
+  .modal-card .sign2{
+    text-align:center; font-family:'Caveat', cursive; font-size:22px;
+    color: var(--gold); margin: 6px 0 22px;
+  }
+
+  .cal-wrap{
+    background: var(--panel-2); border:1px solid var(--border);
+    border-radius: 12px; padding: 16px 16px 14px;
+  }
+  .cal-title{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'JetBrains Mono', monospace; font-size:12.5px; color: var(--muted);
+    margin-bottom: 10px; letter-spacing:0.3px;
+  }
+  .cal-title span.month{ color: var(--gold); font-weight:600; }
+  .cal-grid{
+    display:grid; grid-template-columns: repeat(7, 1fr);
+    gap: 5px; text-align:center;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .cal-grid .dow{
+    font-size: 10.5px; color:#4c5563; padding-bottom: 4px;
+  }
+  .cal-grid .day{
+    font-size: 12.5px; color:#aeb6c2; padding: 7px 0; border-radius:6px;
+  }
+  .cal-grid .day.blank{ visibility:hidden; }
+  .cal-grid .day.today-mark{
+    background: linear-gradient(135deg, var(--rose), var(--gold));
+    color:#191019; font-weight:700;
+    box-shadow: 0 0 0 2px rgba(255,107,157,0.35);
+    position:relative;
+  }
+  .cal-caption{
+    text-align:center; margin-top: 10px; font-size:12px; color: var(--rose);
+    font-family:'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+
+<div class="window">
+  <div class="titlebar">
+    <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+    <span class="name">birthday.js — for Rohit</span>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="code">birthday.js</div>
+    <div class="tab" data-tab="letter">wishes.md<span class="dotmark">●</span></div>
+  </div>
+
+  <div class="pane active" id="pane-code">
+<pre class="code"><span class="cm">// birthday.js — deployed with love, 22 August</span>
+<span class="kw">const</span> <span class="pr">rohit</span> = {
+  <span class="pr">name</span>: <span class="str">"Rohit Sharma"</span>,
+  <span class="pr">birthday</span>: <span class="str">"August 22"</span>,
+  <span class="pr">knownFor</span>: [<span class="str">"showing up"</span>, <span class="str">"good vibes"</span>, <span class="str">"that laugh"</span>],
+  <span class="pr">bugs</span>: <span class="nm">0</span>, <span class="cm">// there aren't any, he's just good like that</span>
+};
+
+<span class="kw">function</span> <span class="fn">celebrate</span>(person) {
+  <span class="kw">return</span> [
+    <span class="str">`Happy Birthday, ${person.name}! 🎉`</span>,
+    <span class="str">"Wishing you a year with zero bugs and infinite good days."</span>,
+    <span class="str">"Grateful for you — today, and always."</span>,
+  ];
+}
+
+<span class="fn">console</span>.<span class="fn">log</span>(<span class="fn">celebrate</span>(rohit));
+<span class="cm">// hit Run to deploy today's happiness →</span></pre>
+  </div>
+
+  <div class="pane" id="pane-letter">
+    <div class="letter">
+      <h2>To Rohit,</h2>
+      <p>Some people are easy to write code for — clear inputs, clean logic, no surprises. You're not that. You're the kind of good that doesn't fit neatly into any function, the constant in every version of my life that actually got better with updates.</p>
+      <p>Today isn't really about the candles or the cake. It's just a good excuse to say — thank you for being exactly who you are, and for letting me be part of your story.</p>
+      <p>Here's to another year of you, unpatched and perfect as you are.</p>
+      <div class="sign">Happy Birthday 🎂 — with all my love</div>
+      <div class="hint">// edit this file directly before you push — make it yours 💛</div>
+    </div>
+  </div>
+
+  <div class="runbar">
+    <span class="label">$ node birthday.js</span>
+    <button class="run" id="runBtn">▶ Run</button>
+  </div>
+
+  <div class="terminal" id="terminal">
+    <div class="line"><span class="prompt">$</span> waiting to run...<span class="cursor"></span></div>
+  </div>
+</div>
+
+<button class="love-fab" id="loveFab" title="Open your message">💌</button>
+
+<div class="modal-overlay" id="loveModal">
+  <div class="modal-card">
+    <button class="modal-close" id="loveClose">✕</button>
+    <div class="modal-greeting">
+      <div class="emoji-row">🎂❤️🎉</div>
+      <h2>Happy Birthday, Rohit</h2>
+    </div>
+    <p class="msg">However this day finds you — I hope it's soft, easy, and full of the small things that make you smile. You've made every ordinary day feel a little more like home, and I'm endlessly grateful for that.</p>
+    <p class="msg">Here's to you — today, and every day after.</p>
+    <div class="sign2">With all my love ❤️</div>
+
+    <div class="cal-wrap">
+      <div class="cal-title"><span>Reminder</span><span class="month">August 2026</span></div>
+      <div class="cal-grid">
+        <div class="dow">S</div><div class="dow">M</div><div class="dow">T</div><div class="dow">W</div><div class="dow">T</div><div class="dow">F</div><div class="dow">S</div>
+        <div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day blank"></div><div class="day">1</div>
+        <div class="day">2</div><div class="day">3</div><div class="day">4</div><div class="day">5</div><div class="day">6</div><div class="day">7</div><div class="day">8</div>
+        <div class="day">9</div><div class="day">10</div><div class="day">11</div><div class="day">12</div><div class="day">13</div><div class="day">14</div><div class="day">15</div>
+        <div class="day">16</div><div class="day">17</div><div class="day">18</div><div class="day">19</div><div class="day">20</div><div class="day">21</div><div class="day today-mark">22</div>
+        <div class="day">23</div><div class="day">24</div><div class="day">25</div><div class="day">26</div><div class="day">27</div><div class="day">28</div><div class="day">29</div>
+        <div class="day">30</div><div class="day">31</div>
+      </div>
+      <div class="cal-caption">22 August — your day ❤️</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const tabs = document.querySelectorAll('.tab');
+  const panes = { code: document.getElementById('pane-code'), letter: document.getElementById('pane-letter') };
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    Object.values(panes).forEach(p => p.classList.remove('active'));
+    panes[t.dataset.tab].classList.add('active');
+  }));
+
+  const terminal = document.getElementById('terminal');
+  const runBtn = document.getElementById('runBtn');
+  let running = false;
+
+  const loveFab = document.getElementById('loveFab');
+  const loveModal = document.getElementById('loveModal');
+  const loveClose = document.getElementById('loveClose');
+  loveFab.addEventListener('click', () => {
+    loveModal.classList.add('open');
+    burstConfetti();
+  });
+  loveClose.addEventListener('click', () => loveModal.classList.remove('open'));
+  loveModal.addEventListener('click', (e) => {
+    if(e.target === loveModal) loveModal.classList.remove('open');
+  });
+
+  const sequence = [
+    { html: '<span class="prompt">$</span> node birthday.js', delay: 0 },
+    { html: '<span class="info">→ compiling wishes...</span>', delay: 500 },
+    { html: '<span class="ok">✔ done</span>', delay: 500 },
+    { html: '<span class="heart">Happy Birthday, Rohit Sharma! 🎉</span>', delay: 700 },
+    { html: '<span class="info">→ deploying happiness to production...</span>', delay: 800 },
+    { html: '<span class="prompt">$</span> git add wishes.md', delay: 700 },
+    { html: '<span class="prompt">$</span> git commit -m "Happy Birthday Rohit 🎂 — another amazing year ahead"', delay: 700 },
+    { html: '<span class="prompt">$</span> git push origin main', delay: 700 },
+    { html: '<span class="ok">✔ deployed successfully 🚀</span>', delay: 700 },
+    { html: '<span class="heart">status: loved, appreciated, celebrated — today and always ❤️</span>', delay: 500 },
+  ];
+
+  function launchConfettiAndBalloons(){
+    burstConfetti();
+    const emojis = ['🎈','🎉','🎂','💛','❤️','🎁'];
+    for(let i=0;i<16;i++){
+      setTimeout(() => {
+        const b = document.createElement('div');
+        b.className = 'balloon';
+        b.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        b.style.left = Math.random()*100 + 'vw';
+        b.style.setProperty('--drift', (Math.random()*160-80)+'px');
+        b.style.animationDuration = (5 + Math.random()*3) + 's';
+        document.body.appendChild(b);
+        setTimeout(() => b.remove(), 9000);
+      }, i*120);
+    }
+  }
+
+  runBtn.addEventListener('click', () => {
+    if(running) return;
+    running = true;
+    terminal.innerHTML = '';
+    runBtn.textContent = '↻ Run again';
+    let t = 0;
+    sequence.forEach((line, i) => {
+      t += line.delay;
+      setTimeout(() => {
+        const div = document.createElement('div');
+        div.className = 'line';
+        div.innerHTML = line.html;
+        terminal.appendChild(div);
+        terminal.scrollTop = terminal.scrollHeight;
+        if(i === sequence.length - 1){
+          launchConfettiAndBalloons();
+          running = false;
+        }
+      }, t);
+    });
+  });
+
+  // Confetti canvas
+  const canvas = document.getElementById('confetti');
+  const ctx = canvas.getContext('2d');
+  function resize(){ canvas.width = innerWidth; canvas.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+
+  let particles = [];
+  const colors = ['#e3b341','#ff6b9d','#79c0ff','#7ee787','#d2a8ff'];
+  function burstConfetti(){
+    for(let i=0;i<140;i++){
+      particles.push({
+        x: innerWidth/2 + (Math.random()*300-150),
+        y: innerHeight*0.35 + (Math.random()*100-50),
+        vx: (Math.random()-0.5)*10,
+        vy: Math.random()*-9 - 3,
+        size: 4 + Math.random()*5,
+        color: colors[Math.floor(Math.random()*colors.length)],
+        rot: Math.random()*360,
+        vrot: (Math.random()-0.5)*10,
+        life: 0
+      });
+    }
+  }
+  function tick(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p => {
+      p.vy += 0.18; p.x += p.vx; p.y += p.vy; p.rot += p.vrot; p.life++;
+      ctx.save();
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = Math.max(0, 1 - p.life/180);
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+      ctx.restore();
+    });
+    particles = particles.filter(p => p.life < 180 && p.y < innerHeight+50);
+    requestAnimationFrame(tick);
+  }
+  tick();
+</script>
+
+</body>
+</html>
